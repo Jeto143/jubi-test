@@ -24,30 +24,28 @@ final class CsvUserImportationConverter implements UserImportationConverterInter
     {
         $userFile = fopen($userFilePath, 'rb');
 
-        if (($headerRow = fgetcsv($userFile, 0, ';')) === false) {
-            throw new InvalidUserFileException('Source file is empty.');
-        }
-
-        if (!in_array(self::SOURCE_FILE_EMAIL_COLUMN, $headerRow, true)) {
-            throw new InvalidUserFileException(sprintf('Source file is missing a "%s" column.', self::SOURCE_FILE_EMAIL_COLUMN));
-        }
-
-        $emailToIdMapping = $this->buildEmailToIdMapping();
-        $valueToIdMappingByFilter = $this->buildValueToIdMappingByFilter();
-
-        $preparedUsers = [];
-
-        while (($row = fgetcsv($userFile, 0, ';')) !== false) {
-            if (count($row) !== count($headerRow)) {
-                throw new InvalidUserFileException(sprintf('All lines from the source file must have %d values.', count($headerRow)));
+        try {
+            if (($headerRow = fgetcsv($userFile, 0, ';')) === false) {
+                throw new InvalidUserFileException('Source file is empty.');
             }
-            $userValues = array_combine($headerRow, $row);
-            $preparedUsers[] = $this->convertUser($userValues, $emailToIdMapping, $valueToIdMappingByFilter);
+            if (!in_array(self::SOURCE_FILE_EMAIL_COLUMN, $headerRow, true)) {
+                throw new InvalidUserFileException(sprintf('Source file is missing a "%s" column.', self::SOURCE_FILE_EMAIL_COLUMN));
+            }
+            $emailToIdMapping = $this->buildEmailToIdMapping();
+            $valueToIdMappingByFilter = $this->buildValueToIdMappingByFilter();
+            $preparedUsers = [];
+            while (($row = fgetcsv($userFile, 0, ';')) !== false) {
+                if (count($row) !== count($headerRow)) {
+                    throw new InvalidUserFileException(sprintf('All lines from the source file must have %d values.', count($headerRow)));
+                }
+                $userValues = array_combine($headerRow, $row);
+                $preparedUsers[] = $this->convertUser($userValues, $emailToIdMapping, $valueToIdMappingByFilter);
+            }
+
+            return $preparedUsers;
+        } finally {
+            fclose($userFile);
         }
-
-        fclose($userFile);
-
-        return $preparedUsers;
     }
 
     /**
