@@ -28,11 +28,14 @@ final class CsvUserImportationConverter implements UserImportationConverterInter
             if (($headerRow = fgetcsv($userFile, 0, ';')) === false) {
                 throw new InvalidUserFileException('Source file is empty.');
             }
+
             if (!in_array(self::SOURCE_FILE_EMAIL_COLUMN, $headerRow, true)) {
                 throw new InvalidUserFileException(sprintf('Source file is missing a "%s" column.', self::SOURCE_FILE_EMAIL_COLUMN));
             }
+
             $emailToIdMapping = $this->buildEmailToIdMapping();
             $valueToIdMappingByFilter = $this->buildValueToIdMappingByFilter();
+
             $preparedUsers = [];
             while (($row = fgetcsv($userFile, 0, ';')) !== false) {
                 if (count($row) !== count($headerRow)) {
